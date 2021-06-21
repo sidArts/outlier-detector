@@ -46,6 +46,10 @@ body {
     table-layout: fixed;
 }
 
+#analysis-panel {
+    display: none;
+}
+
 .modal-lg {
     max-width: 900px;
 }

@@ -24,6 +24,7 @@ var showData = (res) => {
     }
     $('#column-count').text(datasetInfo.columns);
     $('#row-count').text(datasetInfo.rows);
+    $('#analysis-panel').show();
     populateDropdown(datasetInfo);
     $('#table').DataTable();
 };
