@@ -1,111 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <title>Outlier Detection</title>
-    <link rel="stylesheet" href="/static/lib/bootstrap.min.css">
-    <link rel="stylesheet" href="/static/lib/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="/static/lib/bootstrap-select.min.css">
-    <link rel="stylesheet" href="/static/css/style.css">
+  <meta charset="UTF-8">
+  <title>Outlier Detection</title>
+  <link rel="stylesheet" href="/static/lib/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/lib/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="/static/lib/bootstrap-select.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
 </head>
+
 <body>
-    <h1 class="page-header main-header text-center container">Outlier Detection</h1>
-    <div class="container white-background padding-top-10">        
-        <div class="row">
-            <div class="col-3">
-                <input type="file" id="file1">
-            </div>
-            <div class="col-3">
-                <input type="file" id="file2">
-            </div>
-            <div class="col-3">
-                <input type="file" id="file3">
-            </div>
-            <div class="col-3">
-                <button id="upload-btn" class="btn btn-primary btn-sm">Upload</button>
-                <button id="get-data" class="btn btn-primary btn-sm">Show Data</button>
-                
-            </div>
+  <h1 class="page-header main-header text-center container">Outlier Detection</h1>
+  <div class="container white-background padding-top-10">
+    <div class="row">
+      <div class="col-3">
+        <input type="file" id="file1">
+      </div>
+      <div class="col-3">
+        <input type="file" id="file2">
+      </div>
+      <div class="col-3">
+        <input type="file" id="file3">
+      </div>
+      <div class="col-3">
+        <button id="upload-btn" class="btn btn-primary btn-sm">Upload</button>
+        <!-- <button id="get-data" class="btn btn-primary btn-sm">Show Data</button> -->
+
+      </div>
+    </div>
+    <div class="row padding-8">
+      <div class="col-12">
+        <div class="form-inline">
+          <div class="form-group padding-left-right-5">
+            <label>Columns</label>
+            <select multiple id="columns-selector" class="input-small"></select>
+          </div>
+          <div class="form-group padding-left-right-5">
+            <label>Epsilon</label>
+            <input type="text" id="eps" class="form-control input-small width-60" value="15">
+          </div>
+          <div class="form-group padding-left-right-5">
+            <label>Min Samples</label>
+            <input type="text" id="min-samples" class="form-control input-small width-60" value="2">
+          </div>
+          <button id="get-outliers" class="btn btn-primary btn-sm">Get Outliers</button>
+          <div class="form-group padding-left-right-5">
+            <span><strong>Columns:</strong>&nbsp;&nbsp;<span id="column-count"></span></span>
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            <span><strong>Rows:</strong>&nbsp;&nbsp;<span id="row-count"></span></span>
+          </div>
+          
         </div>
-        <div class="row padding-8">
-          <div class="col-12">
-            <div class="form-inline">
-              <div class="form-group padding-left-right-5">
-                <label>Columns</label>
-                <select multiple id="columns-selector"></select>
-              </div>
-              <div class="form-group padding-left-right-5">
-                <label>Epsilon</label>
-                <input type="text" id="eps" class="form-control" value="15">
-              </div>
-              <div class="form-group padding-left-right-5">
-                <label>Min Samples</label>
-                <input type="text" id="min-samples" class="form-control" value="2">
-              </div>
-              <button id="get-outliers" class="btn btn-primary">Get Outliers</button>
-            </div>            
+      </div>
+    </div>
+    <!-- <div class="row padding-8">
+      <div class="col-12">
+        <span><strong>Columns:</strong>&nbsp;&nbsp;<span id="column-count"></span></span>
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <span><strong>Rows:</strong>&nbsp;&nbsp;<span id="row-count"></span></span>
+      </div>
+    </div> -->
+    <div class="row margin-top-10">
+      <div class="col-12 x-scroll">
+        <table id="table" class="table table-bordered table-striped">
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="outliers-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Outliers</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item">
+              <a class="nav-link active" id="data-tab" data-toggle="tab" href="#data-pane" role="tab"
+                aria-controls="data" aria-selected="true">
+                Data
+              </a>
+            </li>
+            <li class="nav-item" id="draw-scatter-plot">
+              <a class="nav-link" id="scatter-plot-tab" data-toggle="tab" href="#scatter-plot-container" role="tab"
+                aria-controls="scatter-plot-container" aria-selected="false">
+                Scatter Plot
+              </a>
+            </li>
+          </ul>
+          <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade show margin-top-10 active x-scroll" id="data-pane" role="tabpanel"
+              aria-labelledby="data-tab">
+
+              <table width="100%" class="table table-striped" id="outlier-table">
+
+              </table>
+            </div>
+            <div class="tab-pane fade" id="scatter-plot-container" role="tabpanel" aria-labelledby="scatter-plot-tab">
+              <button id="reset-zoom" class="btn btn-primary btn-sm margin-top-10">Reset</button>
+              <div id="scatter-plot"></div>
+            </div>
           </div>
         </div>
-        <div class="row margin-top-10">
-            <div class="col-12 x-scroll">
-                <table id="table" class="table table-bordered table-striped">
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
+      </div>
     </div>
+  </div>
+  <div class="throbber">
+    <div class="throbber-overlay"></div>
+    <div class="spinning-circle"></div>
+  </div>
 
-    <div class="modal" id="outliers-modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">Outliers</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <div class="modal-body">
-              <ul class="nav nav-tabs" id="myTab" role="tablist">
-                <li class="nav-item">
-                  <a class="nav-link active" id="data-tab" data-toggle="tab" href="#data-pane" role="tab" aria-controls="data" aria-selected="true">
-                    Data
-                  </a>
-                </li>
-                <li class="nav-item" id="draw-scatter-plot">
-                  <a class="nav-link" id="scatter-plot-tab" data-toggle="tab" href="#scatter-plot-container" role="tab" aria-controls="scatter-plot-container" aria-selected="false">
-                    Scatter Plot
-                  </a>
-                </li>
-              </ul>
-              <div class="tab-content" id="myTabContent">
-                <div class="tab-pane fade show margin-top-10 active x-scroll" id="data-pane" role="tabpanel" aria-labelledby="data-tab">
-                  
-                  <table width="100%" class="table table-striped" id="outlier-table">
+  <script src="/static/lib/jquery-3.6.0.js"></script>
+  <script src="/static/lib/popper.min.js"></script>
+  <script src="/static/lib/bootstrap.min.js"></script>
+  <script src="/static/lib/bootstrap-select.min.js"></script>
+  <script src="/static/lib/jquery.dataTables.min.js"></script>
+  <script src="/static/lib/d3.v3.min.js"></script>
+  <script src="/static/lib/d3.tip.v0.6.3.js"></script>
+  <script src="/static/lib/bootbox.min.js"></script>
 
-                  </table>
-                </div>
-                <div class="tab-pane fade" id="scatter-plot-container" role="tabpanel" aria-labelledby="scatter-plot-tab">
-                  <button id="reset-zoom" class="btn btn-primary btn-sm margin-top-10">Reset</button>
-                  <div id="scatter-plot"></div>
-                </div>
-              </div>
-              <div>
-                
-              </div>
-            </div>
-          </div>
-        </div>
-    </div>
-    <script src="/static/lib/jquery-3.6.0.js"></script>
-    <script src="/static/lib/popper.min.js"></script>
-    <script src="/static/lib/bootstrap.min.js" ></script>
-    <script src="/static/lib/bootstrap-select.min.js"></script>
-    <script src="/static/lib/jquery.dataTables.min.js" ></script>
-    <script src="/static/lib/d3.v3.min.js"></script>    
-    <script src="/static/lib/d3.tip.v0.6.3.js"></script>
-    
-
-    <script src="/static/js/scatter-plot.js"></script>
-    <script src="/static/js/script.js"></script>
+  <script src="/static/js/scatter-plot.js"></script>
+  <script src="/static/js/script.js"></script>
 </body>
+
 </html>

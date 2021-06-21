@@ -1,4 +1,5 @@
 import os
+import json
 
 from flask import Flask, render_template, request, jsonify, Response
 import pandas as pd
@@ -28,13 +29,21 @@ def upload_csv():
     if request.files.get('file3'):
         f = request.files['file3']
         f.save('./web/uploads/3.' + list(reversed(f.filename.split('.')))[0].strip())
-    return Util.get_datasets().head(500).to_json(orient='records')
+    return get_data()
 
 
 @app.route('/get-data', methods=['GET', 'POST'])
 def get_data():
-    dataset = Util.get_datasets().head(500)
-    return Response(dataset.to_json(orient='records'), mimetype='application/json')
+    dataset = Util.get_datasets()
+    dataset_info: dict = json.loads(dataset.dtypes.to_json())
+    dataset_info = {
+        'rows': len(dataset),
+        'columns': len(list(dataset.columns)),
+        'dataTypes': {item[0]: item[1]['name'] for item in dataset_info.items()}
+    }
+    json_str = '{"data": ' + dataset.head(500).to_json(orient='records') + \
+               ', "info": ' + json.dumps(dataset_info) + '}'
+    return Response(json_str, mimetype='application/json')
 
 
 @app.route('/get-outliers', methods=['GET', 'POST'])
@@ -47,7 +56,10 @@ def get_outliers():
     print('Length of dataset -> ' + str(len(dataset)))
     columns_to_drop = [col for col in dataset.columns if col not in columns_to_show]
     preprocessed_dataset = dataset.copy().drop(columns_to_drop, axis=1)
-    outliers = Util.run_dbscan(preprocessed_dataset, eps, min_samples)
+    try:
+        outliers = Util.run_dbscan(preprocessed_dataset, eps, min_samples)
+    except Exception as e:
+        return Response(str(e), status=500)
     print('Length of outliers -> ' + str(len(outliers)))
     return Response(dataset.iloc[outliers].head(500).to_json(orient='records'), mimetype='application/json')
 

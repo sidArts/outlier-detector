@@ -1,37 +1,85 @@
-var allData = [], outliers = [], svg = null;
+var allData = [], datasetInfo = {}, outliers = [], svg = null;
+var numericDataTypes = new Set([
+    "int_", "int8", "int16", "int32", "int64", "uint8", "uint16",
+    "uint32", "uint64", "float_", "float16", "float32", "float64"
+]);
 var showData = (res) => {
-    allData = res;
-    if ($.fn.DataTable.isDataTable( '#table' )) {
+    allData = res.data;
+    datasetInfo = res.info;
+    if ($.fn.DataTable.isDataTable('#table')) {
         $('#table').dataTable().fnClearTable();
         $('#table').dataTable().fnDestroy();
     }
-    if(res.length == 0) {
+    if (!allData || allData.length == 0) {
         $('#table').append(`<tr><td>No Data Found</td></tr>`);
         $('#columns-selector').selectpicker();
         return;
     }
-    let thead = '<tr><td>' + Object.keys(res[0]).join('</td><td>') + '</td></tr>';
+    let thead = '<tr><td>' + Object.keys(allData[0]).join('</td><td>') + '</td></tr>';
     $('#table').html(`<thead>${thead}</thead>`);
     $('#table').append($('<tbody>'));
-    for(let data of res) {
+    for (let data of allData) {
         let row = '<td>' + Object.values(data).join('</td><td>') + '</td>';
         $('#table > tbody').append(`<tr>${row}</tr>`);
     }
-    populateDropdown(Object.keys(res[0]));
+    $('#column-count').text(datasetInfo.columns);
+    $('#row-count').text(datasetInfo.rows);
+    populateDropdown(datasetInfo);
     $('#table').DataTable();
 };
 
-var populateDropdown = (values) => {
-    // $('#columns-selector').selectpicker('destroy');
+var showOutliers = (res) => {
+    outliers = res;
+    if ($.fn.DataTable.isDataTable('#outlier-table')) {
+        $('#outlier-table').dataTable().fnClearTable();
+        $('#outlier-table').dataTable().fnDestroy();
+    }
+    if (outliers.length == 0) {
+        bootbox.alert("No outliers Found! Try tuning the hyperparameters...");
+        return;
+    }
+    let thead = '<tr><td>' + Object.keys(res[0]).join('</td><td>') + '</td></tr>';
+    $('#outlier-table').html(`<thead>${thead}</thead>`);
+    $('#outlier-table').append($('<tbody>'));
+    for (let data of res) {
+        let row = '<td>' + Object.values(data).join('</td><td>') + '</td>';
+        $('#outlier-table > tbody').append(`<tr>${row}</tr>`);
+    }
+    $('#myTab li:first-child a').tab('show');
+    $('#outliers-modal').modal('show');
+    $('#outlier-table').DataTable();
+}
+
+var populateDropdown = (datasetInfo) => {
+    $('#columns-selector').selectpicker('destroy');
     $('#columns-selector').html('');
-    values.forEach(d => {
-        $('#columns-selector').append($('<option>', {'value': d, 'text': d}));
-    });    
+    Object.keys(datasetInfo.dataTypes).forEach(d => {
+        let option = $('<option>', { 'value': d, 'text': `${d} - ${datasetInfo.dataTypes[d]}` });
+        if (numericDataTypes.has(datasetInfo.dataTypes[d]))
+            option.attr('selected', '');
+        $('#columns-selector').append(option);
+    });
     setTimeout(() => {
         $('#columns-selector').selectpicker();
     }, 500);
-    
+
 };
+
+var getData = () => {
+    $('.throbber').show();
+    $.ajax({
+        method: 'POST',
+        url: '/get-data',
+        contentType: 'application/json',
+        dataType: 'json',
+        success: (res) => {
+            showData(res);
+            $('.throbber').hide();
+        }, error: () => {
+            $('.throbber').hide();
+        }
+    });
+}
 
 $(document).ready(() => {
     $('#upload-btn').click(() => {
@@ -43,6 +91,7 @@ $(document).ready(() => {
         formData.append("file1", file1);
         formData.append("file2", file2);
         formData.append("file3", file3);
+        $('.throbber').show();
         $.ajax({
             method: 'POST',
             url: '/upload-csv',
@@ -53,6 +102,11 @@ $(document).ready(() => {
             beforeSend: () => console.log('sending files...'),
             success: (res) => {
                 showData(res);
+                $('.throbber').hide();
+            },
+            error: (err) => {
+                console.log(err);
+                $('.throbber').hide();
             }
         });
     });
@@ -60,40 +114,24 @@ $(document).ready(() => {
     $('#get-outliers').click(() => {
         let columns = $('#columns-selector').val();
         columns = columns.length === 0 ? Object.keys(allData[0]) : columns;
+        $('.throbber').show();
         $.ajax({
             method: 'POST',
             url: '/get-outliers',
-            data: JSON.stringify({ 
-                'columns': columns, 
-                'eps': parseFloat($('#eps').val()), 
-                'minSamples': parseInt($('#min-samples').val()) 
+            data: JSON.stringify({
+                'columns': columns,
+                'eps': parseFloat($('#eps').val()),
+                'minSamples': parseInt($('#min-samples').val())
             }),
             contentType: 'application/json',
             dataType: 'json',
             success: (res) => {
-                outliers = res;
-                let thead = '<tr><td>' + Object.keys(res[0]).join('</td><td>') + '</td></tr>';
-                $('#outlier-table').html(`<thead>${thead}</thead>`);
-                $('#outlier-table').append($('<tbody>'));
-                for(let data of res) {
-                    let row = '<td>' + Object.values(data).join('</td><td>') + '</td>';
-                    $('#outlier-table > tbody').append(`<tr>${row}</tr>`);
-                }
-                $('#outliers-modal').modal('show');
-                $('#outlier-table').DataTable();
-                // drawScatterPlot();
-            }
-        });
-    });
-
-    $('#get-data').click(() => {
-        $.ajax({
-            method: 'POST',
-            url: '/get-data',
-            contentType: 'application/json',
-            dataType: 'json',
-            success: (res) => {
-                showData(res);
+                showOutliers(res);
+                $('.throbber').hide();
+            },
+            error: (err) => {
+                bootbox.alert(err.responseText);
+                $('.throbber').hide();
             }
         });
     });
@@ -104,10 +142,10 @@ $(document).ready(() => {
         $.ajax({
             method: 'POST',
             url: '/get-scatter-plot-data',
-            data: JSON.stringify({ 
-                'columns': columns, 
-                'eps': parseFloat($('#eps').val()), 
-                'minSamples': parseInt($('#min-samples').val()) 
+            data: JSON.stringify({
+                'columns': columns,
+                'eps': parseFloat($('#eps').val()),
+                'minSamples': parseInt($('#min-samples').val())
             }),
             contentType: 'application/json',
             dataType: 'json',
@@ -120,14 +158,14 @@ $(document).ready(() => {
                 })
                 setTimeout(() => {
                     svg = drawScatterPlotFinal(res.dataset.concat(outliers));
-                }, 500);                
+                }, 500);
             }
         });
     });
-    
+
     $('#reset-zoom').click(() => {
         svg.resetZoom();
     })
 
-    $('#get-data').trigger('click');
+    getData();
 });
