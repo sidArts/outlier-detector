@@ -28,7 +28,7 @@ def upload_csv():
     if request.files.get('file3'):
         f = request.files['file3']
         f.save('./web/uploads/3.' + list(reversed(f.filename.split('.')))[0].strip())
-    return Util.get_datasets().to_json(orient='records')
+    return Util.get_datasets().head(500).to_json(orient='records')
 
 
 @app.route('/get-data', methods=['GET', 'POST'])
