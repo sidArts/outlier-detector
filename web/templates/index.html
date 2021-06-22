@@ -46,9 +46,9 @@
           </div>
           <button id="get-outliers" class="btn btn-primary btn-sm">Get Outliers</button>
           <div class="form-group padding-left-right-5">
-            <span><strong>Columns:</strong>&nbsp;&nbsp;<span id="column-count"></span></span>
+            <span><strong>Columns:</strong>&nbsp;&nbsp;<span class="badge badge-primary" id="column-count"></span></span>
             &nbsp;&nbsp;&nbsp;&nbsp;
-            <span><strong>Rows:</strong>&nbsp;&nbsp;<span id="row-count"></span></span>
+            <span><strong>Rows:</strong>&nbsp;&nbsp;<span class="badge badge-primary" id="row-count"></span></span>
           </div>
           
         </div>
@@ -74,8 +74,8 @@
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Outliers</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <h5 class="modal-title">Outliers&nbsp;<span id="outlier-count" class="badge badge-primary"></span></h5>
+          <button type="button" class="close" id="close-modal-btn" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
@@ -102,7 +102,7 @@
 
               </table>
             </div>
-            <div class="tab-pane fade" id="scatter-plot-container" role="tabpanel" aria-labelledby="scatter-plot-tab">
+            <div class="tab-pane fade margin-top-10" id="scatter-plot-container" role="tabpanel" aria-labelledby="scatter-plot-tab">
               <button id="reset-zoom" class="btn btn-primary btn-sm margin-top-10">Reset</button>
               <div id="scatter-plot"></div>
             </div>

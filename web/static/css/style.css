@@ -172,3 +172,7 @@ rect {
 }
 
 /***** end loader ******/
+
+#data-pane, #scatter-plot-container {
+    min-height: 600px;
+}

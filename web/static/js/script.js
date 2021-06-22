@@ -1,4 +1,4 @@
-var allData = [], datasetInfo = {}, outliers = [], svg = null;
+var allData = [], datasetInfo = {}, outliers = [], svg = null, scatterPlotDrawn = false;
 var numericDataTypes = new Set([
     "int_", "int8", "int16", "int32", "int64", "uint8", "uint16",
     "uint32", "uint64", "float_", "float16", "float32", "float64"
@@ -31,24 +31,30 @@ var showData = (res) => {
 
 var showOutliers = (res) => {
     outliers = res;
+    
     if ($.fn.DataTable.isDataTable('#outlier-table')) {
         $('#outlier-table').dataTable().fnClearTable();
         $('#outlier-table').dataTable().fnDestroy();
     }
-    if (outliers.length == 0) {
+    if (outliers.data.length == 0) {
         bootbox.alert("No outliers Found! Try tuning the hyperparameters...");
         return;
     }
-    let thead = '<tr><td>' + Object.keys(res[0]).join('</td><td>') + '</td></tr>';
+    $('#outlier-count').text(outliers.count);
+    let thead = '<tr><td>' + Object.keys(res.data[0]).join('</td><td>') + '</td></tr>';
     $('#outlier-table').html(`<thead>${thead}</thead>`);
     $('#outlier-table').append($('<tbody>'));
-    for (let data of res) {
+    for (let data of res.data) {
         let row = '<td>' + Object.values(data).join('</td><td>') + '</td>';
         $('#outlier-table > tbody').append(`<tr>${row}</tr>`);
-    }
+    }    
     $('#myTab li:first-child a').tab('show');
-    $('#outliers-modal').modal('show');
-    $('#outlier-table').DataTable();
+    setTimeout(() => {
+        $('#outliers-modal').modal({ backdrop: 'static',  keyboard: false });    
+        $('#outlier-table').DataTable();
+        $('.throbber').hide();
+    }, 500);
+    
 }
 
 var populateDropdown = (datasetInfo) => {
@@ -128,7 +134,6 @@ $(document).ready(() => {
             dataType: 'json',
             success: (res) => {
                 showOutliers(res);
-                $('.throbber').hide();
             },
             error: (err) => {
                 bootbox.alert(err.responseText);
@@ -138,8 +143,12 @@ $(document).ready(() => {
     });
 
     $('#draw-scatter-plot').click(() => {
+        if(scatterPlotDrawn)
+            return;
+        scatterPlotDrawn = true;
         let columns = $('#columns-selector').val();
         columns = columns.length === 0 ? Object.keys(allData[0]) : columns;
+        $('.throbber').show();
         $.ajax({
             method: 'POST',
             url: '/get-scatter-plot-data',
@@ -159,14 +168,30 @@ $(document).ready(() => {
                 })
                 setTimeout(() => {
                     svg = drawScatterPlotFinal(res.dataset.concat(outliers));
-                }, 500);
+                    $('.throbber').hide();
+                }, 200);
+            },
+            error: (err) => {
+                bootbox.alert(err.responseText);
+                $('.throbber').hide();
             }
         });
     });
 
+    $('#close-modal-btn').click(() => {
+        if ($.fn.DataTable.isDataTable('#outlier-table')) {
+            $('#outlier-table').dataTable().fnClearTable();
+            $('#outlier-table').dataTable().fnDestroy();
+        }
+        $('#outlier-table').html(``);
+        $("#scatter-plot").html('');
+        $('#outliers-modal').modal('hide');
+        scatterPlotDrawn = false;
+    });
+
     $('#reset-zoom').click(() => {
         svg.resetZoom();
-    })
+    });
 
     getData();
 });
