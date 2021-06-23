@@ -61,9 +61,10 @@ var populateDropdown = (datasetInfo) => {
     $('#columns-selector').selectpicker('destroy');
     $('#columns-selector').html('');
     Object.keys(datasetInfo.dataTypes).forEach(d => {
-        let option = $('<option>', { 'value': d, 'text': `${d} - ${datasetInfo.dataTypes[d]}` });
-        if (numericDataTypes.has(datasetInfo.dataTypes[d]))
-            option.attr('selected', '');
+        // let option = $('<option>', { 'value': d, 'text': `${d} - ${datasetInfo.dataTypes[d]}` });
+        // if (numericDataTypes.has(datasetInfo.dataTypes[d]))
+        //     option.attr('selected', '');
+        let option = $('<option>', { 'value': d, 'text': d });
         $('#columns-selector').append(option);
     });
     setTimeout(() => {
