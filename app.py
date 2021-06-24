@@ -3,7 +3,7 @@ import json
 
 from flask import Flask, render_template, request, jsonify, Response
 from sklearn.preprocessing import StandardScaler
-import category_encoders as ce
+# import category_encoders as ce
 from sklearn.preprocessing import OneHotEncoder
 import pandas as pd
 
