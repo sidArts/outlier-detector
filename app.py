@@ -142,21 +142,21 @@ def get_scatter_plot_data():
             ohe_results = ohe.fit_transform(preprocessed_dataset[columns_to_convert_numeric])
             ohe_results = pd.DataFrame(ohe_results.toarray(), columns=ohe.categories_[0].tolist())
             preprocessed_dataset = preprocessed_dataset.drop(columns=columns_to_convert_numeric)
-            preprocessed_dataset = pd.concat([preprocessed_dataset, ohe_results], axis=1).dropna()
+            preprocessed_dataset = pd.concat([preprocessed_dataset, ohe_results], axis=1)
 
         X = StandardScaler().fit_transform(preprocessed_dataset)
+        X = pd.DataFrame(X, columns=preprocessed_dataset.columns.tolist())
         outliers_indexes = Util.run_dbscan(X, eps, min_samples)
 
-        outliers_df = preprocessed_dataset.iloc[outliers_indexes]
-        preprocessed_dataset_without_outlier = preprocessed_dataset.drop(preprocessed_dataset.index[outliers_indexes])
+        dataset_without_outlier = dataset.drop(dataset.index[outliers_indexes]).reset_index(drop=True)
+        dataset_with_outlier = dataset.iloc[outliers_indexes].reset_index(drop=True)
 
-        dataset_pca = Util.run_pca(preprocessed_dataset_without_outlier)
-        outlier_pca = Util.run_pca(outliers_df)
+        dataset_pca = Util.run_pca(X)
+        dataset_pca_without_outlier = dataset_pca.drop(dataset.index[outliers_indexes]).reset_index(drop=True)
+        dataset_pca_outlier = dataset_pca.iloc[outliers_indexes].reset_index(drop=True)
 
-        dataset_without_outliers = dataset.drop(dataset.index[outliers_indexes]).reset_index(drop=True)
-        dataset_pca_with_details = pd.concat([dataset_pca, dataset_without_outliers], axis=1).head(500)
-        outliers_pca_with_details = pd.concat([outlier_pca, dataset.iloc[outliers_indexes].reset_index(drop=True)],
-                                              axis=1).head(500)
+        dataset_pca_with_details = pd.concat([dataset_pca_without_outlier, dataset_without_outlier], axis=1).head(500)
+        outliers_pca_with_details = pd.concat([dataset_pca_outlier, dataset_with_outlier], axis=1).head(500)
 
         json_str = '{"outliers": ' + outliers_pca_with_details.to_json(orient='records') + \
                    ', "dataset": ' + dataset_pca_with_details.to_json(orient='records') + '}'
