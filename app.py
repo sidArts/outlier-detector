@@ -1,5 +1,6 @@
 import os
 import json
+import traceback as tb
 
 from flask import Flask, render_template, request, jsonify, Response
 from sklearn.preprocessing import StandardScaler
@@ -109,6 +110,7 @@ def get_outliers():
                    dataset.iloc[outliers].head(500).to_json(orient='records') + '}'
         return Response(json_str, mimetype='application/json')
     except Exception as e:
+        tb.print_exc()
         return Response(str(e), status=500)
 
 
@@ -160,6 +162,7 @@ def get_scatter_plot_data():
                    ', "dataset": ' + dataset_pca_with_details.to_json(orient='records') + '}'
         return Response(json_str, mimetype='application/json')
     except Exception as e:
+        tb.print_exc()
         return Response('Some error occurred -> ' + str(e), status=500)
 
 
