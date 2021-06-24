@@ -38,6 +38,7 @@ var showOutliers = (res) => {
     }
     if (outliers.data.length == 0) {
         bootbox.alert("No outliers Found! Try tuning the hyperparameters...");
+        $('.throbber').hide();
         return;
     }
     $('#outlier-count').text(outliers.count);

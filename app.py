@@ -2,6 +2,9 @@ import os
 import json
 
 from flask import Flask, render_template, request, jsonify, Response
+from sklearn.preprocessing import StandardScaler
+import category_encoders as ce
+from sklearn.preprocessing import OneHotEncoder
 import pandas as pd
 
 from services.scripts.data_importer import Util
@@ -75,13 +78,32 @@ def get_outliers():
 
         ######
         if columns_to_convert_numeric:
-            for col in columns_to_convert_numeric:
-                preprocessed_dataset[col] = preprocessed_dataset[col].astype('category')
+            # BINARY ENCODING
+            # encoder = ce.BinaryEncoder(cols=columns_to_convert_numeric)
+            # dataset_to_encode = preprocessed_dataset[columns_to_convert_numeric]
+            # # dataset_encoded: pd.DataFrame = encoder.fit_transform(dataset_to_encode, verbose=1).drop(columns=['intercept'])
+            # dataset_encoded: pd.DataFrame = encoder.fit_transform(dataset_to_encode, verbose=1)
+            # preprocessed_dataset = preprocessed_dataset.drop(columns=columns_to_convert_numeric)
+            # preprocessed_dataset = pd.concat([preprocessed_dataset, dataset_encoded], axis=1)
 
-            cat_columns = preprocessed_dataset.select_dtypes(['category']).columns
-            preprocessed_dataset[cat_columns] = preprocessed_dataset[cat_columns].apply(lambda x: x.cat.codes)
+            # ONE HOT ENCODING
+            ohe = OneHotEncoder()
+            ohe_results = ohe.fit_transform(preprocessed_dataset[columns_to_convert_numeric])
+            ohe_results = pd.DataFrame(ohe_results.toarray(), columns=ohe.categories_[0].tolist())
+            preprocessed_dataset = preprocessed_dataset.drop(columns=columns_to_convert_numeric)
+            preprocessed_dataset = pd.concat([preprocessed_dataset, ohe_results], axis=1)
 
-        outliers = Util.run_dbscan(preprocessed_dataset, eps, min_samples)
+            # FREQUENCY ENCODING
+            # for column in columns_to_convert_numeric:
+            #     fe = preprocessed_dataset.groupby(column).size()
+            #     fe_ = fe / len(preprocessed_dataset)
+            #     preprocessed_dataset[f'{column}_fe'] = preprocessed_dataset[column].map(fe_).round(3)
+            # preprocessed_dataset = preprocessed_dataset.drop(columns=columns_to_convert_numeric)
+
+            preprocessed_dataset.to_csv(path_or_buf='./export.csv')
+
+        X = StandardScaler().fit_transform(preprocessed_dataset)
+        outliers = Util.run_dbscan(X, eps, min_samples)
         # print('Length of outliers -> ' + str(len(outliers)))
         json_str = '{"count": ' + str(len(outliers)) + ', "data": ' + \
                    dataset.iloc[outliers].head(500).to_json(orient='records') + '}'
@@ -109,13 +131,19 @@ def get_scatter_plot_data():
                                       not in int_datatypes]
         ######
         if columns_to_convert_numeric:
-            for col in columns_to_convert_numeric:
-                preprocessed_dataset[col] = preprocessed_dataset[col].astype('category')
+            # for col in columns_to_convert_numeric:
+            #     preprocessed_dataset[col] = preprocessed_dataset[col].astype('category')
+            #
+            # cat_columns = preprocessed_dataset.select_dtypes(['category']).columns
+            # preprocessed_dataset[cat_columns] = preprocessed_dataset[cat_columns].apply(lambda x: x.cat.codes)
+            ohe = OneHotEncoder()
+            ohe_results = ohe.fit_transform(preprocessed_dataset[columns_to_convert_numeric])
+            ohe_results = pd.DataFrame(ohe_results.toarray(), columns=ohe.categories_[0].tolist())
+            preprocessed_dataset = preprocessed_dataset.drop(columns=columns_to_convert_numeric)
+            preprocessed_dataset = pd.concat([preprocessed_dataset, ohe_results], axis=1).dropna()
 
-            cat_columns = preprocessed_dataset.select_dtypes(['category']).columns
-            preprocessed_dataset[cat_columns] = preprocessed_dataset[cat_columns].apply(lambda x: x.cat.codes)
-
-        outliers_indexes = Util.run_dbscan(preprocessed_dataset, eps, min_samples)
+        X = StandardScaler().fit_transform(preprocessed_dataset)
+        outliers_indexes = Util.run_dbscan(X, eps, min_samples)
 
         outliers_df = preprocessed_dataset.iloc[outliers_indexes]
         preprocessed_dataset_without_outlier = preprocessed_dataset.drop(preprocessed_dataset.index[outliers_indexes])
