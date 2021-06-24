@@ -110,7 +110,7 @@ def get_outliers():
                    dataset.iloc[outliers].head(500).to_json(orient='records') + '}'
         return Response(json_str, mimetype='application/json')
     except Exception as e:
-        tb.print_exc()
+        tb.print_exception()
         return Response(str(e), status=500)
 
 
