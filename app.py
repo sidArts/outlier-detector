@@ -100,7 +100,7 @@ def get_outliers():
             #     preprocessed_dataset[f'{column}_fe'] = preprocessed_dataset[column].map(fe_).round(3)
             # preprocessed_dataset = preprocessed_dataset.drop(columns=columns_to_convert_numeric)
 
-            preprocessed_dataset.to_csv(path_or_buf='./export.csv')
+            # preprocessed_dataset.to_csv(path_or_buf='./export.csv')
 
         X = StandardScaler().fit_transform(preprocessed_dataset)
         outliers = Util.run_dbscan(X, eps, min_samples)
